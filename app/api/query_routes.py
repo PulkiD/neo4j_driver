@@ -4,21 +4,23 @@ Query Routes Module.
 This module contains the API routes for executing Neo4j queries using FastAPI.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from app.core.query_service import QueryService
 from app.models.query import QueryRequest, QueryResponse
 from app.utils.logger import get_logger
+from app.middleware.context import get_request_id
 
 logger = get_logger()
 router = APIRouter(prefix="/api/v1", tags=["queries"])
 
 @router.post("/query", response_model=QueryResponse)
-async def execute_query(request: QueryRequest) -> QueryResponse:
+async def execute_query(request: Request, query_request: QueryRequest) -> QueryResponse:
     """
     Execute a Cypher query endpoint.
     
     Args:
-        request (QueryRequest): The query request containing the Cypher query and parameters
+        request: The FastAPI request object
+        query_request: The validated query request containing the Cypher query and parameters
         
     Returns:
         QueryResponse: The query results or error response
@@ -27,8 +29,29 @@ async def execute_query(request: QueryRequest) -> QueryResponse:
         HTTPException: If there's an error processing the request
     """
     try:
-        logger.info(f"Received query request: {request.query}")
-        result = await QueryService.execute_cypher_query(request.query, request.parameters)
+        # Log the raw request body for debugging
+        body = await request.body()
+        logger.debug(
+            "Received raw request body",
+            extra={
+                "request_id": get_request_id(),
+                "raw_body": body.decode()
+            }
+        )
+        
+        logger.info(
+            f"Received query request: {query_request.query}",
+            extra={
+                "request_id": get_request_id(),
+                "query": query_request.query,
+                "parameters": query_request.parameters
+            }
+        )
+        
+        result = await QueryService.execute_cypher_query(
+            query_request.query,
+            query_request.parameters
+        )
         
         if result.status == "error":
             raise HTTPException(status_code=400, detail=result.error)
@@ -37,5 +60,13 @@ async def execute_query(request: QueryRequest) -> QueryResponse:
         
     except Exception as e:
         error_message = f"Error processing request: {str(e)}"
-        logger.error(error_message)
+        logger.error(
+            error_message,
+            extra={
+                "request_id": get_request_id(),
+                "error": str(e),
+                "query": query_request.query if hasattr(query_request, 'query') else None,
+                "parameters": query_request.parameters if hasattr(query_request, 'parameters') else None
+            }
+        )
         raise HTTPException(status_code=500, detail=error_message) 
