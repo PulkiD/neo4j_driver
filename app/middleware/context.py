@@ -39,55 +39,30 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         """
         # Generate unique request ID
         request_id = str(uuid.uuid4())
-        request_id_context.set(request_id)
+        token = request_id_context.set(request_id)
         
         # Add request ID to request state
         request.state.request_id = request_id
         
         # Initialize database connection if not already initialized
-        db = get_db()
+        db = await get_db()
         
         # Log request details
         logger.info(
-            "Request started",
+            f"Processing request: {request.method} {request.url.path}",
             extra={
                 "request_id": request_id,
                 "method": request.method,
-                "url": str(request.url),
-                "client_host": request.client.host if request.client else None
+                "path": request.url.path
             }
         )
         
         try:
-            # Process the request
             response = await call_next(request)
-            
-            # Log response details
-            logger.info(
-                "Request completed",
-                extra={
-                    "request_id": request_id,
-                    "status_code": response.status_code
-                }
-            )
-            
-            # Add request ID to response headers
-            response.headers["X-Request-ID"] = request_id
             return response
-            
-        except Exception as e:
-            # Log error details
-            logger.error(
-                "Request failed",
-                extra={
-                    "request_id": request_id,
-                    "error": str(e)
-                }
-            )
-            raise
         finally:
-            # Clear request context
-            request_id_context.set("")
+            # Clean up request context using the token
+            request_id_context.reset(token)
 
 def get_request_id() -> str:
     """

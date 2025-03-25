@@ -39,15 +39,6 @@ async def execute_query(request: Request, query_request: QueryRequest) -> QueryR
             }
         )
         
-        logger.info(
-            f"Received query request: {query_request.query}",
-            extra={
-                "request_id": get_request_id(),
-                "query": query_request.query,
-                "parameters": query_request.parameters
-            }
-        )
-        
         result = await QueryService.execute_cypher_query(
             query_request.query,
             query_request.parameters

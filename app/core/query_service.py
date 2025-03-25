@@ -32,7 +32,7 @@ class QueryService:
         request_id = get_request_id()
         try:
             logger.info(
-                f"Executing query: {query}",
+                f"Executing query.",
                 extra={
                     "request_id": request_id,
                     "query": query,
@@ -40,7 +40,7 @@ class QueryService:
                 }
             )
             
-            db = get_db()
+            db = await get_db()
             results = await db.execute_query(query, params)
             
             formatted_results = QueryResponse(
@@ -48,38 +48,28 @@ class QueryService:
                 count=len(results),
                 results=results,
                 metadata={
+                    "request_id": request_id,
                     "query": query,
-                    "parameters": params or {},
-                    "request_id": request_id
+                    "parameters": params
                 }
             )
             
             logger.info(
-                f"Query executed successfully. Found {len(results)} results.",
+                f"Query executed successfully.",
                 extra={
                     "request_id": request_id,
                     "result_count": len(results)
                 }
             )
+            
             return formatted_results
             
         except Exception as e:
-            error_message = f"Error executing query: {str(e)}"
             logger.error(
-                error_message,
+                f"Error executing query: {str(e)}",
                 extra={
                     "request_id": request_id,
-                    "error": str(e),
-                    "query": query,
-                    "parameters": params
+                    "error": str(e)
                 }
             )
-            return QueryResponse(
-                status="error",
-                error=error_message,
-                metadata={
-                    "query": query,
-                    "parameters": params or {},
-                    "request_id": request_id
-                }
-            ) 
+            raise 
