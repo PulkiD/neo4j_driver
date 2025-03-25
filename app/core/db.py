@@ -1,11 +1,11 @@
 """
 Neo4j Database Connection Module.
 
-This module provides a singleton database connection instance for Neo4j.
+This module provides a singleton database connection instance for Neo4j with async support.
 """
 
 import os
-from neo4j import GraphDatabase
+from neo4j import GraphDatabase, AsyncGraphDatabase
 from app.utils.logger import get_logger
 
 logger = get_logger()
@@ -17,9 +17,11 @@ class Neo4jConnection:
     Attributes:
         _instance (Neo4jConnection): The singleton instance
         _driver (neo4j.Driver): The Neo4j driver instance
+        _async_driver (neo4j.AsyncDriver): The async Neo4j driver instance
     """
     _instance = None
     _driver = None
+    _async_driver = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -28,7 +30,7 @@ class Neo4jConnection:
         return cls._instance
 
     def _initialize_connection(self):
-        """Initialize the Neo4j database connection using environment variables."""
+        """Initialize both sync and async Neo4j database connections using environment variables."""
         try:
             uri = os.getenv('NEO4J_URI')
             user = os.getenv('NEO4J_USER')
@@ -37,9 +39,13 @@ class Neo4jConnection:
             if not all([uri, user, password]):
                 raise ValueError("Missing required Neo4j connection environment variables")
 
+            # Initialize sync driver
             self._driver = GraphDatabase.driver(uri, auth=(user, password))
-            # Verify connection
             self._driver.verify_connectivity()
+            
+            # Initialize async driver
+            self._async_driver = AsyncGraphDatabase.driver(uri, auth=(user, password))
+            
             logger.info("Successfully connected to Neo4j database")
         except Exception as e:
             logger.error(f"Failed to connect to Neo4j database: {str(e)}")
@@ -47,22 +53,33 @@ class Neo4jConnection:
 
     def get_driver(self):
         """
-        Get the Neo4j driver instance.
+        Get the synchronous Neo4j driver instance.
         
         Returns:
             neo4j.Driver: The configured Neo4j driver instance
         """
         return self._driver
 
-    def close(self):
-        """Close the Neo4j driver connection."""
+    def get_async_driver(self):
+        """
+        Get the asynchronous Neo4j driver instance.
+        
+        Returns:
+            neo4j.AsyncDriver: The configured async Neo4j driver instance
+        """
+        return self._async_driver
+
+    async def close(self):
+        """Close both sync and async Neo4j driver connections."""
         if self._driver:
             self._driver.close()
-            logger.info("Neo4j connection closed")
+        if self._async_driver:
+            await self._async_driver.close()
+        logger.info("Neo4j connections closed")
 
-    def execute_query(self, query, params=None):
+    async def execute_query(self, query: str, params: dict = None) -> list:
         """
-        Execute a Cypher query and return the results.
+        Execute a Cypher query asynchronously and return the results.
         
         Args:
             query (str): The Cypher query to execute
@@ -76,9 +93,10 @@ class Neo4jConnection:
         """
         try:
             db_name = os.getenv('NEO4J_DATABASE', 'neo4j')
-            with self._driver.session(database=db_name) as session:
-                result = session.run(query, params or {})
-                return [record.data() for record in result]
+            async with self._async_driver.session(database=db_name) as session:
+                result = await session.run(query, params or {})
+                records = await result.data()
+                return records
         except Exception as e:
             logger.error(f"Error executing query: {str(e)}")
             raise

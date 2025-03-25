@@ -9,6 +9,36 @@ import sys
 from logging.handlers import RotatingFileHandler
 import logging
 from pythonjsonlogger import jsonlogger
+from typing import Any, Dict
+
+class RequestAwareJsonFormatter(jsonlogger.JsonFormatter):
+    """
+    JSON formatter that includes request ID in all log messages.
+    """
+    
+    def add_fields(self, log_record: Dict[str, Any], record: logging.LogRecord, message_dict: Dict[str, Any]) -> None:
+        """
+        Add custom fields to the log record.
+        
+        Args:
+            log_record: The log record being built
+            record: The original log record
+            message_dict: Additional message dictionary
+        """
+        super().add_fields(log_record, record, message_dict)
+        
+        # Include request_id if available in extra
+        if hasattr(record, 'request_id'):
+            log_record['request_id'] = record.request_id
+        elif not log_record.get('request_id'):
+            # If no request_id in extra, try to get it from context
+            try:
+                from app.middleware.context import get_request_id
+                request_id = get_request_id()
+                if request_id:
+                    log_record['request_id'] = request_id
+            except ImportError:
+                pass
 
 class LoggerSingleton:
     """
@@ -46,8 +76,8 @@ class LoggerSingleton:
         # Console Handler
         console_handler = logging.StreamHandler(sys.stdout)
 
-        # JSON Formatter
-        formatter = jsonlogger.JsonFormatter(
+        # Custom JSON Formatter with request ID support
+        formatter = RequestAwareJsonFormatter(
             '%(asctime)s %(levelname)s %(name)s %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )

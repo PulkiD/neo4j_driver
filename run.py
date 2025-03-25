@@ -1,13 +1,16 @@
 """
 Application runner script.
 
-This script is used to run the Flask application in development mode.
-For production, use gunicorn or another WSGI server.
+This script is used to run the FastAPI application using uvicorn.
 """
 
-from app import create_app
+import uvicorn
 
-app = create_app()
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True) 
+if __name__ == "__main__":
+    uvicorn.run(
+        "app:app",  # Use the import string format: "module:app_instance"
+        host="0.0.0.0",
+        port=5001,
+        reload=True,  # Enable auto-reload for development
+        log_level="info"
+    ) 

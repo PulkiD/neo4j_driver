@@ -1,9 +1,11 @@
-# Neo4j Flask Driver
+# Neo4j FastAPI Driver
 
-A production-ready Flask application that serves as a driver to connect to Neo4j databases hosted on Neo4j Cloud.
+A production-ready FastAPI application that serves as a driver to connect to Neo4j databases hosted on Neo4j Cloud.
 
 ## Features
 
+- FastAPI for high-performance async API development
+- Automatic API documentation (Swagger UI and ReDoc)
 - Singleton pattern for database connection and logging
 - Environment-based configuration
 - Structured logging with JSON format
@@ -11,6 +13,9 @@ A production-ready Flask application that serves as a driver to connect to Neo4j
 - Error handling and proper response formatting
 - Health check endpoint
 - Production-ready code structure
+- Async database operations
+- Pydantic models for request/response validation
+- CORS middleware support
 
 ## Setup
 
@@ -46,8 +51,15 @@ python run.py
 
 ### Production
 ```bash
-gunicorn -w 4 "app:create_app()"
+uvicorn app:app --host 0.0.0.0 --port 5001 --workers 4
 ```
+
+## API Documentation
+
+FastAPI automatically generates interactive API documentation:
+
+- Swagger UI: `http://localhost:5001/docs`
+- ReDoc: `http://localhost:5001/redoc`
 
 ## API Endpoints
 
@@ -89,6 +101,8 @@ gunicorn -w 4 "app:create_app()"
 │   ├── core/
 │   │   ├── db.py
 │   │   └── query_service.py
+│   ├── models/
+│   │   └── query.py
 │   ├── utils/
 │   │   └── logger.py
 │   └── logs/
@@ -113,13 +127,24 @@ The application includes comprehensive error handling:
 - Query execution errors
 - Invalid request format
 - General server errors
+- Automatic HTTP status code mapping
+- Detailed error messages in development mode
 
 ## Security Considerations
 
 - Database credentials are stored in environment variables
 - No sensitive information is exposed in logs
-- Input validation for all API requests
+- Input validation using Pydantic models
+- CORS middleware for API access control
 - Proper error messages without exposing internal details
+
+## Performance Features
+
+- Async database operations
+- FastAPI's high-performance async framework
+- Connection pooling with Neo4j driver
+- Efficient JSON serialization
+- Automatic response compression
 
 ## Contributing
 
