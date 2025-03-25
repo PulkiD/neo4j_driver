@@ -60,7 +60,19 @@ class LoggerSingleton:
     def _initialize_logger(self):
         """Initialize the logger with JSON formatting and both file and console handlers."""
         self.logger = logging.getLogger('neo4j_driver')
-        self.logger.setLevel(os.getenv('LOG_LEVEL', 'INFO'))
+        
+        # Get log level from environment with fallback to INFO
+        log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+        try:
+            # Convert string log level to logging module constant
+            self.logger.setLevel(getattr(logging, log_level))
+        except AttributeError:
+            # If invalid log level, default to INFO
+            self.logger.setLevel(logging.INFO)
+            logger.warning(
+                f"Invalid LOG_LEVEL '{log_level}' in .env. Using INFO instead. "
+                f"Valid levels are: DEBUG, INFO, WARNING, ERROR, CRITICAL"
+            )
 
         # Create logs directory if it doesn't exist
         log_dir = 'app/logs'
