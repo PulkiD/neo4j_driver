@@ -5,7 +5,7 @@ This module provides a singleton database connection instance for Neo4j with asy
 """
 
 import os
-import time
+import asyncio
 from functools import wraps
 from neo4j import GraphDatabase, AsyncGraphDatabase
 from neo4j.time import Date, DateTime, Time, Duration
