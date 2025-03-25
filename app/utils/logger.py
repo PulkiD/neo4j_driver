@@ -69,7 +69,7 @@ class LoggerSingleton:
         except AttributeError:
             # If invalid log level, default to INFO
             self.logger.setLevel(logging.INFO)
-            logger.warning(
+            self.logger.warning(
                 f"Invalid LOG_LEVEL '{log_level}' in .env. Using INFO instead. "
                 f"Valid levels are: DEBUG, INFO, WARNING, ERROR, CRITICAL"
             )

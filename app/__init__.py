@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from app.api.query_routes import router as query_router
+from app.api.transform_routes import router as transform_router
 from app.utils.logger import get_logger
 from app.middleware.context import RequestContextMiddleware
 
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     
     # Register routers
     app.include_router(query_router)
+    app.include_router(transform_router)
     
     @app.get("/health")
     async def health_check():

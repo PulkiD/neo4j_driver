@@ -1,7 +1,7 @@
 """
 Query Routes Module.
 
-This module contains the API routes for executing Neo4j queries using FastAPI.
+This module contains the API routes for CRUD operations using FastAPI.
 """
 
 from fastapi import APIRouter, HTTPException, Request
@@ -11,7 +11,7 @@ from app.utils.logger import get_logger
 from app.middleware.context import get_request_id
 
 logger = get_logger()
-router = APIRouter(prefix="/api/v1", tags=["queries"])
+router = APIRouter(prefix="/api/v1/query", tags=["queries"])
 
 @router.post("/read", response_model=QueryResponse)
 async def execute_query(request: Request, query_request: QueryRequest) -> QueryResponse:
