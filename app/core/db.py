@@ -18,19 +18,23 @@ class Neo4jConnection:
         _instance (Neo4jConnection): The singleton instance
         _driver (neo4j.Driver): The Neo4j driver instance
         _async_driver (neo4j.AsyncDriver): The async Neo4j driver instance
+        _initialized (bool): Whether the connection has been initialized
     """
     _instance = None
     _driver = None
     _async_driver = None
+    _initialized = False
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(Neo4jConnection, cls).__new__(cls)
-            cls._instance._initialize_connection()
         return cls._instance
 
     def _initialize_connection(self):
         """Initialize both sync and async Neo4j database connections using environment variables."""
+        if self._initialized:
+            return
+
         try:
             uri = os.getenv('NEO4J_URI')
             user = os.getenv('NEO4J_USER')
@@ -46,6 +50,7 @@ class Neo4jConnection:
             # Initialize async driver
             self._async_driver = AsyncGraphDatabase.driver(uri, auth=(user, password))
             
+            self._initialized = True
             logger.info("Successfully connected to Neo4j database")
         except Exception as e:
             logger.error(f"Failed to connect to Neo4j database: {str(e)}")
@@ -58,6 +63,8 @@ class Neo4jConnection:
         Returns:
             neo4j.Driver: The configured Neo4j driver instance
         """
+        if not self._initialized:
+            self._initialize_connection()
         return self._driver
 
     def get_async_driver(self):
@@ -67,6 +74,8 @@ class Neo4jConnection:
         Returns:
             neo4j.AsyncDriver: The configured async Neo4j driver instance
         """
+        if not self._initialized:
+            self._initialize_connection()
         return self._async_driver
 
     async def close(self):
@@ -75,6 +84,7 @@ class Neo4jConnection:
             self._driver.close()
         if self._async_driver:
             await self._async_driver.close()
+        self._initialized = False
         logger.info("Neo4j connections closed")
 
     async def execute_query(self, query: str, params: dict = None) -> list:
@@ -93,7 +103,7 @@ class Neo4jConnection:
         """
         try:
             db_name = os.getenv('NEO4J_DATABASE', 'neo4j')
-            async with self._async_driver.session(database=db_name) as session:
+            async with self.get_async_driver().session(database=db_name) as session:
                 result = await session.run(query, params or {})
                 records = await result.data()
                 return records
