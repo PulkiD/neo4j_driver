@@ -32,7 +32,7 @@ class PxLSVizRelationship(BaseModel):
     id: str = Field(..., description="Relationship identifier")
     source: str = Field(..., description="Source node ID")
     target: str = Field(..., description="Target node ID")
-    type: str = Field(..., description="Relationship type")
+    # relation: str = Field(..., description="Relationship type")
     # Add any other common relationship properties here
 
 class PxLSVizResponse(BaseModel):
