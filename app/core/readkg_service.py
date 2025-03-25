@@ -11,7 +11,7 @@ from app.middleware.context import get_request_id
 
 logger = get_logger()
 
-class QueryService:
+class ReadKGService:
     """Service class for handling Neo4j query operations."""
 
     @staticmethod

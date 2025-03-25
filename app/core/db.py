@@ -224,7 +224,7 @@ class Neo4jConnection:
                     parsed = json.loads(data)
                     return self._convert_to_serializable(parsed)
             except json.JSONDecodeError:
-                pass
+                logger.error(f"Error parsing JSON string from output to JSON: {data}")
             return data
         else:
             return data

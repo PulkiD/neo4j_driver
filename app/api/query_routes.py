@@ -5,7 +5,7 @@ This module contains the API routes for executing Neo4j queries using FastAPI.
 """
 
 from fastapi import APIRouter, HTTPException, Request
-from app.core.query_service import QueryService
+from app.core.readkg_service import ReadKGService
 from app.models.query import QueryRequest, QueryResponse
 from app.utils.logger import get_logger
 from app.middleware.context import get_request_id
@@ -13,7 +13,7 @@ from app.middleware.context import get_request_id
 logger = get_logger()
 router = APIRouter(prefix="/api/v1", tags=["queries"])
 
-@router.post("/query", response_model=QueryResponse)
+@router.post("/read", response_model=QueryResponse)
 async def execute_query(request: Request, query_request: QueryRequest) -> QueryResponse:
     """
     Execute a Cypher query endpoint.
@@ -39,7 +39,7 @@ async def execute_query(request: Request, query_request: QueryRequest) -> QueryR
             }
         )
         
-        result = await QueryService.execute_cypher_query(
+        result = await ReadKGService.execute_cypher_query(
             query_request.query,
             query_request.parameters
         )
